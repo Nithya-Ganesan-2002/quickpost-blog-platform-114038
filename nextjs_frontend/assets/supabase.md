@@ -17,12 +17,16 @@ You should create these tables in Supabase (SQL editor):
 ### `posts`
 | Column      | Type       | Description                |
 | ----------- | ---------- | ------------------------- |
-| id          | uuid, PK   | Primary key                |
-| user_id     | uuid       | Author (FK users)          |
+| id          | uuid, PK   | Primary key, DEFAULT extensions.uuid_generate_v4() in 'extensions' schema |
+| user_id     | uuid       | Author (FK users via auth.users) |
 | title       | text       | Post title                 |
 | content     | text       | Markdown content           |
 | created_at  | timestamp  | Created time (default now) |
-| updated_at  | timestamp  | Last updated time          |
+
+- **Row Level Security** enabled
+- Policy: Only authenticated users (where `user_id = auth.uid()`) are allowed to access rows
+
+> Note: The `uuid_generate_v4()` function is used from the `extensions` schema where available.
 
 ### `comments`
 | Column      | Type       | Description                |
