@@ -1,5 +1,13 @@
+"use client";
 import LayoutContainer from "../../components/LayoutContainer";
 import Sidebar from "../../components/Sidebar";
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
+
+// Dynamically import the Markdown editor to avoid SSR issues
+const MdEditor = dynamic(() => import("react-markdown-editor-lite"), { ssr: false });
+import "react-markdown-editor-lite/lib/index.css";
+import ReactMarkdown from "react-markdown";
 
 // PUBLIC_INTERFACE
 export default function NewPostPage() {
@@ -14,19 +22,36 @@ export default function NewPostPage() {
 }
 
 function PostEditor() {
-  // Placeholder for markdown editing UI to be implemented.
+  const [content, setContent] = useState<string>("");
+
+  const handleEditorChange = ({ text }: { text: string }) => {
+    setContent(text);
+  };
+
   return (
     <div>
-      <textarea
-        className="w-full min-h-[160px] border rounded p-3 mb-4 font-mono"
-        placeholder="Write your post in Markdown..."
-        disabled
+      <MdEditor
+        value={content}
+        style={{ height: "350px", borderRadius: "4px" }}
+        renderHTML={(text: string) => <ReactMarkdown>{text}</ReactMarkdown>}
+        onChange={handleEditorChange}
+        placeholder="Write your post content here using Markdown..."
+        view={{ menu: true, md: true, html: true }}
+        config={{
+          canView: {
+            menu: true,
+            md: true,
+            html: true,
+            fullScreen: true,
+            hideMenu: true,
+          },
+        }}
       />
-      <button className="bg-[#0070f3] px-6 py-2 text-white font-semibold rounded opacity-70 cursor-not-allowed" disabled>
-        Publish (coming soon)
-      </button>
-      <div className="text-gray-400 mt-2">
-        Markdown support, preview, and publish will be implemented next.
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-2">Preview</h3>
+        <div className="prose bg-gray-50 p-4 rounded border">
+          <ReactMarkdown>{content || "Nothing to preview yet..."}</ReactMarkdown>
+        </div>
       </div>
     </div>
   );
