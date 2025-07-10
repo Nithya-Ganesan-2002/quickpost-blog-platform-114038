@@ -63,17 +63,42 @@ function PostEditor() {
       return;
     }
 
-    // Insert into Supabase
+    // Validate that user.id is a UUID (simple regex check)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const userId = user.id;
+    if (!uuidRegex.test(userId)) {
+      setError("User ID is not a valid UUID — can't associate post with your account. Please contact support.");
+      setLoading(false);
+      return;
+    }
+
+    // Insert into Supabase with improved error handling
     const { error: insertError } = await supabase.from("posts").insert([
       {
         title: title.trim(),
         content,
-        user_id: user.id
+        user_id: userId
       }
     ]);
 
     if (insertError) {
-      setError(insertError.message);
+      // Provide more detailed error handling, especially for RLS or type issues
+      if (
+        insertError.message.includes("Row Level Security") ||
+        insertError.message.includes("not allowed") ||
+        insertError.message.includes("permission")
+      ) {
+        setError("You do not have permission to create posts (RLS policy violation). Are you signed in? Contact support if this persists.");
+      } else if (
+        insertError.message.includes("invalid input syntax for type uuid") ||
+        insertError.message.includes("uuid")
+      ) {
+        setError("User ID (UUID) did not match expected format — database insert failed. This could indicate a user/session/account bug.");
+      } else {
+        setError(insertError.message || "Failed to create post: Unknown error.");
+      }
+      // Helpful debugging: optionally log details (comment out in production)
+      // console.error("Insert error details:", insertError, { user, userId });
     } else {
       setSuccess("Post created successfully!");
       // Optionally, redirect after a short delay
